@@ -5,8 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:webSocketTeste"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Canvas>
-        <Button Content="LIGA WEBSOCKET" Name="btnLigaServer" Click="btnLigaServer_Click" Canvas.Left="25" Canvas.Top="22" Height="83" Width="345" />
+        Title="MainWindow" Height="443" Width="757">
+    <Canvas Margin="0,0,-33,-51">
+        <Button Content="LIGA WEBSOCKET" Name="btnLigaServer" Click="btnLigaServer_Click" Canvas.Left="10" Canvas.Top="23" Height="45" Width="698" />
+        <TextBlock Name="txtMsg" Canvas.Left="10" Canvas.Top="73" Width="698" Height="279"></TextBlock>
+        <TextBox Name="txtEnvio" Canvas.Left="10" Canvas.Top="360" Width="540"></TextBox>
+        <Button Content="ENVIAR MENSAGEM" Name="btnEnviarMsg" Click="btnEnviarMsg_Click" Canvas.Left="555" Canvas.Top="357" Height="24" Width="153" />
     </Canvas>
 </Window>
