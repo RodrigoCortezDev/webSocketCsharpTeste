@@ -7,9 +7,16 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="443" Width="757">
     <Canvas Margin="0,0,-33,-51">
-        <Button Content="LIGA WEBSOCKET" Name="btnLigaServer" Click="btnLigaServer_Click" Canvas.Left="10" Canvas.Top="23" Height="45" Width="698" />
-        <TextBlock Name="txtMsg" Canvas.Left="10" Canvas.Top="73" Width="698" Height="279"></TextBlock>
+        <Button Content="LIGA WEBSOCKET" Name="btnLigaServer" Click="btnLigaServer_Click" Canvas.Left="10" Canvas.Top="23" Height="45" Width="368" />
+        <TextBlock Name="txtMsg" Canvas.Left="10" Canvas.Top="73" Width="368" Height="279"></TextBlock>
         <TextBox Name="txtEnvio" Canvas.Left="10" Canvas.Top="360" Width="540"></TextBox>
         <Button Content="ENVIAR MENSAGEM" Name="btnEnviarMsg" Click="btnEnviarMsg_Click" Canvas.Left="555" Canvas.Top="357" Height="24" Width="153" />
+        <DataGrid Name="gridClient" SelectionMode="Extended" Canvas.Left="395" Canvas.Top="23" Height="329" Width="352"  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding index}" Header="Index" />
+                <DataGridTextColumn Binding="{Binding dadosCliente}" Header="Dados Cliente" Width="*"/>
+                <DataGridTextColumn Binding="{Binding status}" Header="Status" Width="120"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Canvas>
 </Window>

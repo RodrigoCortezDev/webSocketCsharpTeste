@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Timers;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -18,8 +22,9 @@ using System.Windows.Shapes;
 
 namespace webSocketTeste
 {
-    public class StateObject
+    public class StateObject : INotifyPropertyChanged
     {
+        public int _index;
         // Size of receive buffer.  
         public const int BufferSize = 1024;
 
@@ -30,18 +35,57 @@ namespace webSocketTeste
         public StringBuilder sb = new StringBuilder();
 
         // Client socket.
-        public Socket workSocket = null;
+        public Socket client = null;
+
+        public string dadosCliente
+        {
+            get { return $"Remote EndPoint: {client?.RemoteEndPoint?.ToString()}"; }
+        }
+
+        public int index
+        {
+            get { return _index; }
+            set { _index = value; }
+        }
+
+        public string status
+        {
+            get 
+            {
+                if (client != null)
+                {
+                    return client.Connected ? "Conectado" : "Desconectado";
+                }
+
+                return " - ";
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
     }
 
     public partial class MainWindow : Window
     {
+        public int countClient = 0;
         public Socket serverSocket;
-        public Socket client;
         public StateObject state = new StateObject();
+        public ObservableCollection<StateObject> listClient = new ObservableCollection<StateObject>();
+        System.Timers.Timer timer = null;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            gridClient.ItemsSource = listClient;
+
+            timer = new System.Timers.Timer(1000);
+            timer.Elapsed += async (sender, e) => await AtualizaStatus();
+            timer.Start();
         }
 
         private void btnLigaServer_Click(object sender, RoutedEventArgs e)
@@ -72,7 +116,7 @@ namespace webSocketTeste
             // Retrieve the state object and the handler socket  
             // from the asynchronous state object.  
             StateObject state = (StateObject)ar.AsyncState;
-            Socket cliente = state.workSocket;
+            Socket cliente = state.client;
 
             // Read data from the client socket.
             int bytesRead = cliente.EndReceive(ar);
@@ -109,7 +153,7 @@ namespace webSocketTeste
         {
             try
             {
-                
+                Socket client = null;
                 if (serverSocket != null && serverSocket.IsBound)
                 {
                     client = serverSocket.EndAccept(result);
@@ -119,9 +163,15 @@ namespace webSocketTeste
                     client.Send(msg);
 
                     StateObject state = new StateObject();
-                    state.workSocket = client;
+                    state.client = client;
+                    state.index = ++countClient;
                     client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                         new AsyncCallback(ReadCallback), state);
+
+                    App.Current.Dispatcher.Invoke((Action)delegate 
+                    {
+                        listClient.Add(state);
+                    });
                 }
                 if (client != null)
                 {
@@ -141,46 +191,39 @@ namespace webSocketTeste
             }
         }
 
-
-
-
-        private void onReceive(IAsyncResult result)
+        private async Task AtualizaStatus()
         {
-            try
+            foreach (var item in listClient)
             {
-                if (serverSocket != null && serverSocket.IsBound)
+                try
                 {
-                    int bytesRead = serverSocket.EndReceive(result);
-
-                    byte[] msg = Encoding.ASCII.GetBytes("Buuuurro");
-
-                    client.Send(msg);
+                    if (item.client.Poll(0, SelectMode.SelectRead))
+                    {
+                        byte[] buff = new byte[1];
+                        if (item.client.Receive(buff, SocketFlags.Peek) == 0)
+                        {
+                            item.client.Close();
+                            // Client disconnected
+                            item.OnPropertyChanged("status");
+                        }
+                    }
                 }
-                if (client != null)
+                catch
                 {
-                    /* Handshaking and managing ClientSocket */
-                }
-            }
-            catch (SocketException exception)
-            {
-                MessageBox.Show("Erro", exception.Message);
-            }
-            finally
-            {
-                if (serverSocket != null && serverSocket.IsBound)
-                {
-                    serverSocket.BeginAccept(null, 0, onReceive, serverSocket);
+                    item.OnPropertyChanged("status");
                 }
             }
         }
 
         private void btnEnviarMsg_Click(object sender, RoutedEventArgs e)
         {
-            if (client != null)
+            foreach (var item in gridClient.SelectedItems)
             {
+                var clientAux = ((StateObject)item).client;
+
                 byte[] msg = Encoding.ASCII.GetBytes(txtEnvio.Text);
 
-                client.Send(msg);
+                clientAux?.Send(msg);
             }
         }
     }
